@@ -2,37 +2,75 @@ import resolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
 import sourceMaps from 'rollup-plugin-sourcemaps'
 import camelCase from 'lodash.camelcase'
-import typescript from 'rollup-plugin-typescript2'
+import typescript from 'rollup-plugin-typescript'
 import json from 'rollup-plugin-json'
-
-const pkg = require('./package.json')
+import babel from 'rollup-plugin-babel';
+import fs from 'fs';
+import path from 'path';
+import pkg from './package.json'
 
 const libraryName = 'atn'
+const src = path.resolve('src');
 
-export default {
+const onwarn = warning => {
+	console.error(
+		'Building Rollup produced warnings that need to be resolved. ' +
+			'Please keep in mind that the browser build may never have external dependencies!'
+	);
+	throw new Error(warning.message);
+};
+
+function resolveTypescript() {
+	return {
+		name: 'resolve-typescript',
+		resolveId(importee, importer) {
+			if (~importee.indexOf('package.json')) return path.resolve('package.json');
+			if (
+				importer &&
+				importer.startsWith(src) &&
+				importee[0] === '.' &&
+				path.extname(importee) === ''
+			) {
+				return path.resolve(path.dirname(importer), `${importee}.ts`);
+			}
+		}
+	};
+}
+
+export default [{
   input: `src/${libraryName}.ts`,
+  onwarn,
   output: [
-    { file: pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: true },
-    { file: pkg.module, format: 'es', sourcemap: true },
+    { file: pkg.browser, name: camelCase(libraryName), format: 'umd', sourcemap: true },
   ],
-  // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
-  external: [],
-  watch: {
-    include: 'src/**',
-  },
   plugins: [
-    // Allow json resolution
     json(),
-    // Compile TypeScript files
-    typescript({ useTsconfigDeclarationDir: true }),
-    // Allow bundling cjs modules (unlike webpack, rollup doesn't understand cjs)
+    resolveTypescript(),
+    typescript({ typescript: require('typescript') }),
     commonjs(),
-    // Allow node_modules resolution, so you can use 'external' to control
-    // which external modules to include in the bundle
-    // https://github.com/rollup/rollup-plugin-node-resolve#usage
-    resolve(),
-
-    // Resolve source maps to the original source
+    resolve({ browser: true }),
+    babel({
+      exclude: 'node_modules/**',
+    }),
     sourceMaps(),
   ],
-}
+},{
+  input: `src/${libraryName}.ts`,
+  onwarn,
+  output: [
+    { file: pkg.main, format: 'cjs', sourcemap: true },
+    { file: pkg.module, format: 'es', sourcemap: true },
+  ],
+  external: [''],
+  plugins: [
+    json(),
+    resolveTypescript(),
+    typescript({ typescript: require('typescript') }),
+    commonjs(),
+    resolve(),
+    babel({
+      exclude: 'node_modules/**',
+    }),
+    sourceMaps(),
+  ],
+}]

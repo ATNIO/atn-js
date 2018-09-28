@@ -1,28 +1,40 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    "target": "es5",
-    "module":"es2015",
-    "lib": ["es2015", "es2016", "es2017", "dom"],
-    "strict": true,
-    "sourceMap": true,
-    "declaration": true,
     "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "resolveJsonModule": true,
     "declarationDir": "dist/types",
+    "downlevelIteration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "lib": [
+      "es2015",
+      "es2016",
+      "es2017",
+      "dom"
+    ],
+    "module": "commonjs",
+    "moduleResolution": "node",
     "outDir": "dist/lib",
+    "sourceMap": true,
+    "strict": true,
+    "target": "es5",
     "typeRoots": [
       "node_modules/@types"
     ]
   },
-  "include": [
-    "src"
-  ],
   "exclude": [
     "dist",
     "node_modules",
     "test"
+  ],
+  "files": [
+    "src/atn.ts",
+    "typings/atn.d.ts"
+  ],
+  "include": [
+    "src",
+    "typings/**/*.ts"
   ]
-
 }
